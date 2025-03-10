@@ -1,0 +1,86 @@
+const express = require('express');
+const bcrypt = require('bcrypt');
+const db = require('../db');
+const validator = require('validator');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
+const router = express.Router();
+
+router.post('/register', async (req, res) => {
+    const { username, email, password, skills, profile_picture } = req.body;
+
+    if (!username || !email || !password) {
+        return res.status(400).json({ message: 'Usuario, email y contraseña son requeridos' });
+    }
+
+    if (!validator.isEmail(email)) {
+        return res.status(400).json({ message: 'Formato de correo electrónico inválido' });
+    }
+
+    try {
+        db.query('SELECT * FROM users WHERE username = ? OR email = ?', [username, email], async (err, results) => {
+            if (err) return res.status(500).json({ message: 'Error en el servidor' });
+
+            if (results.length > 0) {
+                return res.status(409).json({ message: 'El usuario o el correo ya existen' });
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            db.query('INSERT INTO users (username, email, password, skills, profile_picture) VALUES (?, ?, ?, ?, ?)', 
+                [username, email, hashedPassword, skills || '', profile_picture || ''], 
+                (err) => {
+                    if (err) return res.status(500).json({ message: 'Error al registrar usuario' });
+
+                    res.status(201).json({ message: 'Usuario registrado con éxito' });
+                });
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+});
+
+router.post('/login', (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Usuario y contraseña son requeridos' });
+    }
+
+    db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
+        if (err) return res.status(500).json({ message: 'Error en el servidor' });
+
+        if (results.length === 0) {
+            return res.status(401).json({ message: 'Credenciales inválidas' });
+        }
+
+        const user = results[0];
+
+       
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Credenciales inválidas' });
+        }
+
+        
+        const jwtSecret = process.env.JWT_SECRET;
+
+
+        const token = jwt.sign(
+            { userId: user.id, username: user.username },
+            jwtSecret,
+            { expiresIn: '1h' }
+        );
+
+        res.status(200).json({
+            message: 'Login exitoso',
+            token: token,
+            userId: user.id,
+            username: user.username
+        });
+    });
+});
+
+module.exports = router;
