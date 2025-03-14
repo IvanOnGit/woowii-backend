@@ -42,13 +42,13 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!username || !password) {
-        return res.status(400).json({ message: 'Usuario y contraseña son requeridos' });
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email y contraseña son requeridos' });
     }
 
-    db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
+    db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {  // Cambié 'username' a 'email'
         if (err) return res.status(500).json({ message: 'Error en el servidor' });
 
         if (results.length === 0) {
@@ -57,19 +57,16 @@ router.post('/login', (req, res) => {
 
         const user = results[0];
 
-       
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
-        
         const jwtSecret = process.env.JWT_SECRET;
 
-
         const token = jwt.sign(
-            { userId: user.id, username: user.username },
+            { userId: user.id, email: user.email },
             jwtSecret,
             { expiresIn: '1h' }
         );
@@ -78,7 +75,7 @@ router.post('/login', (req, res) => {
             message: 'Login exitoso',
             token: token,
             userId: user.id,
-            username: user.username
+            email: user.email 
         });
     });
 });
