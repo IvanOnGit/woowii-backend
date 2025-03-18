@@ -80,4 +80,26 @@ router.post('/login', (req, res) => {
     });
 });
 
+router.post('/update-avatar', async (req, res) => {
+    const { userId, profile_picture } = req.body;
+
+    if (!userId || !profile_picture) {
+        return res.status(400).json({ message: "ID de usuario y avatar requeridos" });
+    }
+
+    try {
+        db.query('UPDATE users SET profile_picture = ? WHERE id = ?', [profile_picture, userId], (err, result) => {
+            if (err) return res.status(500).json({ message: "Error al actualizar el avatar" });
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ message: "Usuario no encontrado" });
+            }
+
+            res.status(200).json({ message: "Avatar actualizado con éxito" });
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error en el servidor" });
+    }
+});
+
 module.exports = router;
