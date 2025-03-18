@@ -122,4 +122,43 @@ router.get('/get-user', (req, res) => {
     });
 });
 
+router.post('/register-company', async (req, res) => {
+    const { company_first_email, company_fullname, password } = req.body;
+
+    // Validación de los campos obligatorios
+    if (!company_first_email || !company_fullname || !password) {
+        return res.status(400).json({ message: 'El email de la empresa, el nombre completo y la contraseña son requeridos' });
+    }
+
+    try {
+        // Verificar si la empresa ya está registrada
+        const [existingCompany] = await db.promise().query(
+            'SELECT * FROM companies WHERE company_first_email = ?',
+            [company_first_email]
+        );
+
+        if (existingCompany.length > 0) {
+            return res.status(400).json({ message: 'El email de la empresa ya está registrado' });
+        }
+
+        // Hashea la contraseña de la empresa antes de almacenarla
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Inserta la nueva empresa en la base de datos con la contraseña hasheada
+        const [results] = await db.promise().query(
+            'INSERT INTO companies (company_first_email, company_fullname, password) VALUES (?, ?, ?)',
+            [company_first_email, company_fullname, hashedPassword]
+        );
+
+        const companyId = results.insertId; // ID generado automáticamente por la base de datos
+
+        res.status(201).json({ message: 'Empresa registrada con éxito', companyId });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error al registrar la empresa' });
+    }
+});
+
+
+
 module.exports = router;
