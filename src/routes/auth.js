@@ -159,6 +159,52 @@ router.post('/register-company', async (req, res) => {
     }
 });
 
+router.post('/login-company', async (req, res) => {
+    const { company_first_email, password } = req.body;
 
+    if (!company_first_email || !password) {
+        return res.status(400).json({ message: 'El email de la empresa y la contraseña son requeridos' });
+    }
+
+    try {
+        // Busca la empresa en la base de datos por su email
+        const [results] = await db.promise().query('SELECT * FROM companies WHERE company_first_email = ?', [company_first_email]);
+
+        if (results.length === 0) {
+            return res.status(401).json({ message: 'Credenciales inválidas' });
+        }
+
+        const company = results[0];
+
+        // Compara la contraseña hasheada con la proporcionada
+        const isMatch = await bcrypt.compare(password, company.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Credenciales inválidas' });
+        }
+
+        const jwtSecret = process.env.JWT_SECRET;
+
+        if (!jwtSecret) {
+            return res.status(500).json({ message: 'Error en la configuración del servidor (JWT Secret missing)' });
+        }
+
+        const token = jwt.sign(
+            { companyId: company.id, company_first_email: company.company_first_email },
+            jwtSecret,
+            { expiresIn: '1h' }
+        );
+
+        res.status(200).json({
+            message: 'Login exitoso',
+            token: token,
+            companyId: company.id,
+            company_first_email: company.company_first_email
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+});
 
 module.exports = router;
