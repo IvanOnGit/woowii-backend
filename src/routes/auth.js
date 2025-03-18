@@ -104,4 +104,22 @@ router.post('/update-avatar', async (req, res) => {
     }
 });
 
+router.get('/get-user', (req, res) => {
+    const { userId } = req.query;
+
+    if (!userId) {
+        return res.status(400).json({ message: 'User ID es requerido' });
+    }
+
+    db.query('SELECT username, profile_picture FROM users WHERE id = ?', [userId], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Error en el servidor' });
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        res.status(200).json(results[0]);
+    });
+});
+
 module.exports = router;
