@@ -72,7 +72,8 @@ router.post('/register', async (req, res) => {
             message: 'Login exitoso',
             token: token,
             userId: user.id,
-            email: user.email
+            email: user.email,
+            username: user.username // ✅ Ahora incluimos el username
         });
     } catch (err) {
         console.error(err);
