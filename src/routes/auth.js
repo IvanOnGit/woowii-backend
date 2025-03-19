@@ -198,8 +198,9 @@ router.post('/login-company', async (req, res) => {
         res.status(200).json({
             message: 'Login exitoso',
             token: token,
-            id: company.id,  // <-- Ahora se llama "id"
-            company_first_email: company.company_first_email
+            id: company.id,  // Ahora se llama "id"
+            company_first_email: company.company_first_email,
+            company_username: company.company_username // Agregado a la respuesta
         });
     } catch (err) {
         console.error(err);
