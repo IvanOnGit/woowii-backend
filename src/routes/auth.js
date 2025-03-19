@@ -190,7 +190,7 @@ router.post('/login-company', async (req, res) => {
         }
 
         const token = jwt.sign(
-            { companyId: company.id, company_first_email: company.company_first_email },
+            { id: company.id, company_first_email: company.company_first_email },
             jwtSecret,
             { expiresIn: '1h' }
         );
@@ -198,7 +198,7 @@ router.post('/login-company', async (req, res) => {
         res.status(200).json({
             message: 'Login exitoso',
             token: token,
-            companyId: company.id,
+            id: company.id,  // <-- Ahora se llama "id"
             company_first_email: company.company_first_email
         });
     } catch (err) {
@@ -206,5 +206,73 @@ router.post('/login-company', async (req, res) => {
         res.status(500).json({ message: 'Error en el servidor' });
     }
 });
+
+router.post('/update-avatar-company', async (req, res) => {
+    const { 
+      id,
+      company_name, 
+      admin_role, 
+      company_second_email, 
+      subscription, 
+      employees_quantity, 
+      company_address, 
+      industry, 
+      company_avatar, 
+      website, 
+      company_username 
+    } = req.body;
+  
+    // Verificar que al menos se proporcionen el ID de la empresa y un campo para actualizar
+    if (!id) {
+        return res.status(400).json({ message: 'El ID es requerido' });
+      }
+  
+    // Verificar que al menos un campo para actualizar esté presente
+    if (!company_name && !admin_role && !company_second_email && !subscription && 
+        !employees_quantity && !company_address && !industry && 
+        !company_avatar && !website && !company_username) {
+      return res.status(400).json({ message: 'Se debe proporcionar al menos un campo para actualizar' });
+    }
+  
+    // Crear un objeto con los campos que existen en el request
+    const updateFields = {};
+    
+    if (company_name) updateFields.company_name = company_name;
+    if (admin_role) updateFields.admin_role = admin_role;
+    if (company_second_email) updateFields.company_second_email = company_second_email;
+    if (subscription) updateFields.subscription = subscription;
+    if (employees_quantity) updateFields.employees_quantity = employees_quantity;
+    if (company_address) updateFields.company_address = company_address;
+    if (industry) updateFields.industry = industry;
+    if (company_avatar) updateFields.company_avatar = company_avatar;
+    if (website) updateFields.website = website;
+    if (company_username) updateFields.company_username = company_username;
+  
+    // Construir la consulta SQL dinámicamente
+    const fieldsToUpdate = Object.keys(updateFields);
+    const placeholders = fieldsToUpdate.map(field => `${field} = ?`).join(', ');
+    const values = fieldsToUpdate.map(field => updateFields[field]);
+    values.push(id);
+  
+    const query = `UPDATE companies SET ${placeholders} WHERE id = ?`;
+  
+    try {
+      db.query(query, values, (err, result) => {
+        if (err) {
+          console.error('Error en la actualización de la empresa:', err);
+          return res.status(500).json({ message: 'Error al actualizar la información de la empresa' });
+        }
+        
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ message: 'Empresa no encontrada' });
+        }
+        
+        res.status(200).json({ message: 'Información de la empresa actualizada con éxito' });
+      });
+    } catch (error) {
+      console.error('Error en el servidor:', error);
+      res.status(500).json({ message: 'Error en el servidor' });
+    }
+  });
 
 module.exports = router;
