@@ -275,4 +275,29 @@ router.post('/update-avatar-company', async (req, res) => {
     }
   });
 
+
+  router.get('/get-company', (req, res) => {
+    const { id } = req.query; // Se mantiene 'id' en lugar de 'companyId'
+
+    if (!id) {
+        return res.status(400).json({ message: 'ID es requerido' });
+    }
+
+    console.log("ID recibido:", id);  // Log para verificar el id recibido
+
+    db.query('SELECT Company_username, Company_avatar FROM companies WHERE id = ?', [id], (err, results) => {
+        if (err) {
+            console.error("Error de consulta:", err);  // Log para errores de la base de datos
+            return res.status(500).json({ message: 'Error en el servidor' });
+        }
+
+        console.log("Resultados de la consulta:", results);  // Log para los resultados de la consulta
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Empresa no encontrada' });
+        }
+
+        res.status(200).json(results[0]);
+    });
+});
 module.exports = router;
