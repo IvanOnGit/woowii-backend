@@ -73,7 +73,7 @@ router.post('/register', async (req, res) => {
             token: token,
             userId: user.id,
             email: user.email,
-            username: user.username // ✅ Ahora incluimos el username
+            username: user.username || ""// ✅ Ahora incluimos el username
         });
     } catch (err) {
         console.error(err);
