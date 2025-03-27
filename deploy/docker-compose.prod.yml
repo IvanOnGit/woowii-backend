@@ -2,12 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: api:prod
-#    build:
-#
-#        context: .
-#        dockerfile: Dockerfile
-#    container_name: express-app
+    image: 905418185177.dkr.ecr.eu-west-3.amazonaws.com/backend-api:${IMAGE_TAG}
     ports:
       - "3000:3000"
     environment:
@@ -21,9 +16,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-#    volumes:
-#      - ./:/usr/src/app
-#      - /usr/src/app/node_modules
+    restart: unless-stopped
   mysql:
     image: mysql:8.0.41
     container_name: mysql
@@ -32,13 +25,13 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       timeout: 5s
       retries: 3
+    restart: unless-stopped
 
 
 
