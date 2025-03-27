@@ -16,12 +16,38 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'] // working branch
 }));
 
+// Request logging middleware
+app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${req.method} ${req.path} from IPs: ${req.ip} | User-Agent: ${req.headers['user-agent']}`);
+    next();
+});
+
 app.use(bodyParser.json());
 
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
     res.send('¡Bienvenido al servidor Woowii! 🚀');
+});
+
+//health check
+app.get('/health', (req, res) => {
+    //ping database
+    let health = 'healthy';
+    let msg = 'Servidor funcionando correctamente';
+    db.query('SELECT 1', (err, rows) => {
+        if (err) {
+            health = 'unhealthy';
+            msg = 'Error, por favor revisar la base de datos';
+            console.error('Error al hacer ping a la base de datos:', err);
+        }
+    });
+
+    res.send({
+        health: 'healthy',
+        message: 'Servidor funcionando correctamente'
+    });
 });
 
 db.connect((err) => {

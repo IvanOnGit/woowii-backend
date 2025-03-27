@@ -2,12 +2,10 @@ version: '3.8'
 
 services:
   app:
-    image: api:prod
-#    build:
-#
-#        context: .
-#        dockerfile: Dockerfile
-#    container_name: express-app
+    build:
+        context: .
+        dockerfile: dev.Dockerfile
+    container_name: express-app
     ports:
       - "3000:3000"
     environment:
@@ -21,9 +19,9 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-#    volumes:
-#      - ./:/usr/src/app
-#      - /usr/src/app/node_modules
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
   mysql:
     image: mysql:8.0.41
     container_name: mysql
@@ -37,7 +35,9 @@ services:
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
-      timeout: 5s
+      start_period: 8s
+      interval: 2s
+      timeout: 4s
       retries: 3
 
 
