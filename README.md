@@ -47,3 +47,16 @@ The deployment is done using docker and docker-compose. The following steps are 
    ```
     docker-compose logs app -f
     ```
+   
+
+## Database migrations
+
+To create a new migration, run the following script:
+```
+./scripts/generate-migration.sh migration-name
+```
+
+This will create a two new files in the `src/migrations/sql` directory. One file with the up migration and another file with the down migration.
+In the up migration file, write the SQL code to create the new table or modify the existing table. In the down migration file, write the SQL code to revert the changes made in the up migration file.
+
+The migrations are executed when the application starts.

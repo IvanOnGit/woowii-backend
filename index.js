@@ -4,11 +4,16 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const authRoutes = require('./src/routes/auth');
 const db = require('./db');
+const { runMigrations } = require('./src/migrations/migrate');
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+
+
+runMigrations()
 
 app.use(cors({
   origin: 'http://localhost:3001',
