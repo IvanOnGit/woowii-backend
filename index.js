@@ -45,8 +45,8 @@ app.get('/health', (req, res) => {
     });
 
     res.send({
-        health: 'healthy',
-        message: 'Servidor funcionando correctamente'
+        health: health,
+        message: msg,
     });
 });
 
