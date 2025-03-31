@@ -18,7 +18,7 @@ router.post('/register', async (req, res) => {
       // Hashea la contraseña antes de almacenarla
       const hashedPassword = await bcrypt.hash(password, 10);
   
-      // Inserta el nuevo usuario en la base de datos con la contraseña hasheada
+      // Inserta el nuevo usuario en la base de datos con la contraseña hash
       const [results] = await db.promise().query(
         'INSERT INTO users (fullname, email, password) VALUES (?, ?, ?)',
         [fullname, email, hashedPassword]
