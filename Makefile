@@ -19,3 +19,6 @@ build-and-push:
 	docker build  --platform linux/amd64 -t api:$(TAG) -f Dockerfile . && \
 	docker tag api:$(TAG) $(ECR_URL)/backend-api:$(TAG)
 	docker push $(ECR_URL)/backend-api:$(TAG)
+
+build-windows:
+	$env:DOCKER_BUILDKIT = "0"; docker build --platform linux/amd64 -t api:$(TAG) -f Dockerfile .; docker tag api:$(TAG) 905418185177.dkr.ecr.eu-west-3.amazonaws.com/backend-api:prod-02; docker push 905418185177.dkr.ecr.eu-west-3.amazonaws.com/backend-api:$(TAG)

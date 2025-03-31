@@ -1,5 +1,5 @@
 # Stage 1: Build stage
-FROM --platform=linux/amd64 node:20.15.0 as builder
+FROM --platform=linux/amd64 node:20.15.0 AS builder
 
 # Set npm to version 10.7.0
 RUN npm install -g npm@10.7.0
