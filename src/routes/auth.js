@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const db = require('../../db');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
+const secretKey = process.env.JWT_SECRET || 'secret_key';
 require('dotenv').config();
 
 const router = express.Router();
@@ -301,5 +302,59 @@ router.post('/update-avatar-company', async (req, res) => {
 
         res.status(200).json(results[0]);
     });
+  });
+
+  router.post('/create-job', async (req, res) => {
+    const authHeader = req.headers.authorization;
+    console.log("📌 Header de autorización recibido:", authHeader); // 🔍 Verifica si llega el header correctamente
+
+    if (!authHeader) {
+        return res.status(401).json({ message: "Token requerido" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    console.log("📌 Token extraído:", token); // 🔍 Verifica si se extrae bien el token
+
+    try {
+        const decoded = jwt.verify(token, secretKey);
+        console.log("✅ Token decodificado con éxito:", decoded); // 🔍 Ver si realmente se decodifica
+
+        const companyId = decoded.id; // Aquí obtenemos la empresa autenticada
+        console.log("🏢 ID de la empresa autenticada:", companyId); // 🔍 Ver si el ID es correcto
+
+        const {
+            title, salary, variable, presencial_percentage, remote_percentage,
+            about_us, what_you_will_do, who_you_will_work_with, survival_kit,
+            selection_process, responsibilities, indispensable, ideal, plus
+        } = req.body;
+
+        console.log("📌 Datos recibidos para crear el job:", req.body); // 🔍 Ver qué datos llegan
+
+        if (!title || presencial_percentage === undefined || remote_percentage === undefined) {
+            console.log("⚠️ Faltan campos obligatorios");
+            return res.status(400).json({ message: 'Faltan campos obligatorios' });
+        }
+
+        const [result] = await db.promise().query(
+            `INSERT INTO jobs 
+            (company_id, title, salary, variable, presencial_percentage, remote_percentage,
+            about_us, what_you_will_do, who_you_will_work_with, survival_kit, 
+            selection_process_step1, selection_process_step2, selection_process_step3, selection_process_step4,
+            responsibilities, indispensable, ideal, plus) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        
+            [companyId, title, salary, variable, presencial_percentage, remote_percentage,
+            about_us, what_you_will_do, who_you_will_work_with, survival_kit,
+            selection_process[0] || null, selection_process[1] || null, selection_process[2] || null, selection_process[3] || null,
+            JSON.stringify(responsibilities), JSON.stringify(indispensable), JSON.stringify(ideal), JSON.stringify(plus)]
+        );
+
+        console.log("✅ Trabajo creado con ID:", result.insertId);
+        res.status(201).json({ message: 'Trabajo creado con éxito', jobId: result.insertId });
+    } catch (error) {
+        console.error("❌ Error al verificar el token:", error.name, error.message); // 🔍 Imprime el tipo de error
+        res.status(403).json({ message: `Token inválido: ${error.message}` });
+    }
 });
+
 module.exports = router;
