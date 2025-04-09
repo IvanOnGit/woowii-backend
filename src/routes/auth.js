@@ -336,18 +336,35 @@ router.post('/update-avatar-company', async (req, res) => {
         }
 
         const [result] = await db.promise().query(
-            `INSERT INTO jobs 
-            (company_id, title, salary, variable, presencial_percentage, remote_percentage,
-            about_us, what_you_will_do, who_you_will_work_with, survival_kit, 
-            selection_process_step1, selection_process_step2, selection_process_step3, selection_process_step4,
-            responsibilities, indispensable, ideal, plus) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        
-            [companyId, title, salary, variable, presencial_percentage, remote_percentage,
-            about_us, what_you_will_do, who_you_will_work_with, survival_kit,
-            selection_process[0] || null, selection_process[1] || null, selection_process[2] || null, selection_process[3] || null,
-            JSON.stringify(responsibilities), JSON.stringify(indispensable), JSON.stringify(ideal), JSON.stringify(plus)]
-        );
+            `INSERT INTO jobs (
+                company_id, title, salary, variable, presencial_percentage, remote_percentage,
+                about_us, what_you_will_do, who_you_will_work_with, survival_kit,
+                selection_process_step1, selection_process_step2, selection_process_step3, selection_process_step4,
+                responsibilities, indispensable, ideal, plus
+              )
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, // ✅ 18 columnas
+          
+            [
+              companyId,
+              title,
+              salary,
+              variable,
+              presencial_percentage,
+              remote_percentage,
+              about_us,
+              what_you_will_do,
+              who_you_will_work_with,
+              JSON.stringify(survival_kit),
+              selection_process[0] || null,
+              selection_process[1] || null,
+              selection_process[2] || null,
+              selection_process[3] || null,
+              JSON.stringify(responsibilities),
+              JSON.stringify(indispensable),
+              JSON.stringify(ideal),
+              JSON.stringify(plus)
+            ]
+          );
 
         console.log("✅ Trabajo creado con ID:", result.insertId);
         res.status(201).json({ message: 'Trabajo creado con éxito', jobId: result.insertId });
