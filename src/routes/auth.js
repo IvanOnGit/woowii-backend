@@ -374,4 +374,18 @@ router.post('/update-avatar-company', async (req, res) => {
     }
 });
 
+
+router.get('/jobs', async (req, res) => {
+    try {
+        const [rows] = await db.promise().query(`
+            SELECT id, title, about_us, salary FROM jobs ORDER BY id DESC
+        `);
+
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error("❌ Error al obtener los trabajos:", error);
+        res.status(500).json({ message: 'Error al obtener los trabajos' });
+    }
+});
+
 module.exports = router;
