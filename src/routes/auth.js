@@ -388,4 +388,93 @@ router.get('/jobs', async (req, res) => {
     }
 });
 
+router.post('/save-user-skills', async (req, res) => {
+    const { userId, toolset, analysis, hardset, softset, superpower } = req.body;
+  
+    // Verificamos que llegue el userId
+    if (!userId) {
+      return res.status(400).json({ message: 'Falta el userId' });
+    }
+  
+    try {
+      const [result] = await db.promise().query(
+        `UPDATE users 
+         SET 
+           toolset = ?, 
+           analysis = ?, 
+           hardset = ?, 
+           softset = ?, 
+           superpower = ?
+         WHERE id = ?`,
+        [
+          JSON.stringify(toolset),
+          JSON.stringify(analysis),
+          JSON.stringify(hardset),
+          JSON.stringify(softset),
+          JSON.stringify(superpower),
+          userId
+        ]
+      );
+  
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+  
+      res.status(200).json({ message: 'Habilidades del usuario actualizadas con éxito' });
+    } catch (error) {
+      console.error("❌ Error al actualizar las habilidades del usuario:", error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+  
+router.get('/get-user-skills', async (req, res) => {
+    const { userId } = req.query;
+  
+    if (!userId) {
+      return res.status(400).json({ message: 'Falta el userId' });
+    }
+  
+    try {
+      const [rows] = await db.promise().query(
+        `SELECT toolset, analysis, hardset, softset, superpower 
+         FROM users 
+         WHERE id = ?`,
+        [userId]
+      );
+  
+      if (rows.length === 0) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+  
+      // Imprimir los valores obtenidos para depuración
+      console.log('Datos obtenidos:', rows[0]);
+  
+      // Verificar los valores antes de devolverlos, sin necesidad de parsear
+      const userSkills = {
+        toolset: Array.isArray(rows[0].toolset) ? rows[0].toolset : tryParseJSON(rows[0].toolset),
+        analysis: Array.isArray(rows[0].analysis) ? rows[0].analysis : tryParseJSON(rows[0].analysis),
+        hardset: Array.isArray(rows[0].hardset) ? rows[0].hardset : tryParseJSON(rows[0].hardset),
+        softset: Array.isArray(rows[0].softset) ? rows[0].softset : tryParseJSON(rows[0].softset),
+        superpower: Array.isArray(rows[0].superpower) ? rows[0].superpower : tryParseJSON(rows[0].superpower),
+      };
+  
+      res.status(200).json(userSkills);
+  
+    } catch (error) {
+      console.error("❌ Error al obtener las habilidades del usuario:", error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+  
+  // Función auxiliar para intentar parsear los JSON
+  function tryParseJSON(jsonString) {
+    try {
+      console.log('Intentando parsear:', jsonString);
+      return JSON.parse(jsonString || '[]');
+    } catch (error) {
+      console.error('Error al parsear JSON:', error);
+      return [];
+    }
+  }
+
 module.exports = router;
