@@ -404,7 +404,39 @@ router.get('/jobs', async (req, res) => {
       console.error("❌ Error al obtener los trabajos:", error);
       res.status(500).json({ message: 'Error al obtener los trabajos' });
     }
-  });
+});
+  
+router.get('/jobs/by-company/:companyId', async (req, res) => {
+  const { companyId } = req.params;
+
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT id, title, about_us, salary, survival_kit FROM jobs WHERE company_id = ? ORDER BY id DESC`,
+      [companyId]
+    );
+
+    const jobsWithParsedKit = rows.map(job => ({
+      ...job,
+      survival_kit: tryParseJSON(job.survival_kit),
+    }));
+
+    res.status(200).json(jobsWithParsedKit);
+
+    function tryParseJSON(jsonString) {
+      try {
+        const onceParsed = JSON.parse(jsonString || '[]');
+        return Array.isArray(onceParsed) ? onceParsed : JSON.parse(onceParsed);
+      } catch (error) {
+        console.error('❌ Error al parsear survival_kit:', error);
+        return [];
+      }
+    }
+
+  } catch (error) {
+    console.error("❌ Error al obtener los trabajos de la empresa:", error);
+    res.status(500).json({ message: 'Error al obtener los trabajos de la empresa' });
+  }
+});
 
 router.post('/save-user-skills', async (req, res) => {
     const { userId, toolset, analysis, hardset, softset, superpower } = req.body;
