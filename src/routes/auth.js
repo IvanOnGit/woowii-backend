@@ -438,6 +438,55 @@ router.get('/jobs/by-company/:companyId', async (req, res) => {
   }
 });
 
+router.get('/job/:jobId', async (req, res) => {
+  const { jobId } = req.params;
+
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT * FROM jobs WHERE id = ?`,
+      [jobId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Trabajo no encontrado' });
+    }
+
+    const job = rows[0];
+
+    // Parseamos los campos que son arrays JSON
+    const parsedJob = {
+      ...job,
+      survival_kit: tryParseJSON(job.survival_kit),
+      responsibilities: tryParseJSON(job.responsibilities),
+      indispensable: tryParseJSON(job.indispensable),
+      ideal: tryParseJSON(job.ideal),
+      plus: tryParseJSON(job.plus),
+      selection_process: [
+        job.selection_process_step1,
+        job.selection_process_step2,
+        job.selection_process_step3,
+        job.selection_process_step4
+      ].filter(Boolean),
+    };
+
+    res.status(200).json(parsedJob);
+
+    function tryParseJSON(jsonString) {
+      try {
+        const onceParsed = JSON.parse(jsonString || '[]');
+        return Array.isArray(onceParsed) ? onceParsed : JSON.parse(onceParsed);
+      } catch (error) {
+        console.error('❌ Error al parsear JSON:', error);
+        return [];
+      }
+    }
+
+  } catch (error) {
+    console.error("❌ Error al obtener el trabajo:", error);
+    res.status(500).json({ message: 'Error al obtener el trabajo' });
+  }
+});
+
 router.post('/save-user-skills', async (req, res) => {
     const { userId, toolset, analysis, hardset, softset, superpower } = req.body;
   
