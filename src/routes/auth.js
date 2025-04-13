@@ -641,6 +641,56 @@ router.get('/get-user-skills', async (req, res) => {
             res.json({ applied: alreadyApplied });
         }
     );
-});
+  });
+
+  router.get('/notifications', (req, res) => {
+    const companyId = req.query.companyId;
+  
+    if (!companyId) {
+      return res.status(400).json({ message: "Falta el parámetro companyId" });
+    }
+  
+    const sql = `
+      SELECT COUNT(*) AS total
+      FROM applications AS a
+      INNER JOIN jobs AS j ON a.job_id = j.id
+      WHERE j.company_id = ? AND a.status = 'pending'
+    `;
+  
+    db.query(sql, [companyId], (err, results) => {
+      if (err) {
+        console.error("Error al obtener notificaciones:", err);
+        return res.status(500).json({ message: "Error al obtener notificaciones" });
+      }
+  
+      const total = results[0]?.total || 0;
+      res.json({ total });
+    });
+  });
+
+  router.get('/new-applications', (req, res) => {
+    const companyId = req.query.companyId;
+  
+    if (!companyId) {
+      return res.status(400).json({ message: "Falta companyId" });
+    }
+  
+    const sql = `
+    SELECT j.title AS jobTitle
+    FROM applications AS a
+    INNER JOIN jobs AS j ON a.job_id = j.id
+    WHERE j.company_id = ? AND a.status = 'pending'
+    ORDER BY a.applied_at DESC
+  `;
+  
+    db.query(sql, [companyId], (err, results) => {
+      if (err) {
+        console.error("Error al obtener nuevas postulaciones:", err);
+        return res.status(500).json({ message: "Error interno" });
+      }
+  
+      res.json(results);
+    });
+  });
 
 module.exports = router;
