@@ -452,7 +452,7 @@ router.get('/job/:jobId', async (req, res) => {
     }
 
     const job = rows[0];
-
+    console.log("🔍 Trabajo crudo desde la base de datos:", job);
     // Parseamos los campos que son arrays JSON
     const parsedJob = {
       ...job,
@@ -473,6 +473,13 @@ router.get('/job/:jobId', async (req, res) => {
 
     function tryParseJSON(jsonString) {
       try {
+        // Si el valor es un array o un objeto ya, no lo parseamos
+        if (Array.isArray(jsonString) || typeof jsonString === 'object') {
+          return jsonString;
+        }
+    
+        // Si no es un array u objeto, intentamos parsearlo como JSON
+        console.log("🚨 Intentando parsear:", jsonString); // Ver qué está llegando aquí
         const onceParsed = JSON.parse(jsonString || '[]');
         return Array.isArray(onceParsed) ? onceParsed : JSON.parse(onceParsed);
       } catch (error) {
@@ -575,5 +582,65 @@ router.get('/get-user-skills', async (req, res) => {
       return [];
     }
   }
+  
+  router.post('/apply', (req, res) => {
+    const { userId, jobId } = req.body;
+
+    if (!userId || !jobId) {
+        return res.status(400).json({ message: 'Faltan datos: userId o jobId' });
+    }
+
+    // Verificamos si ya existe una postulación
+    db.query(
+        `SELECT * FROM applications WHERE user_id = ? AND job_id = ?`,
+        [userId, jobId],
+        (err, results) => {
+            if (err) {
+                console.error('❌ Error al verificar postulación:', err);
+                return res.status(500).json({ message: 'Error interno del servidor' });
+            }
+
+            if (results.length > 0) {
+                return res.status(409).json({ message: 'Ya te postulaste a este trabajo' });
+            }
+
+            // Insertamos la nueva postulación
+            db.query(
+                `INSERT INTO applications (user_id, job_id, status) VALUES (?, ?, ?)`,
+                [userId, jobId, 'pending'],
+                (err) => {
+                    if (err) {
+                        console.error('❌ Error al insertar postulación:', err);
+                        return res.status(500).json({ message: 'Error al guardar la postulación' });
+                    }
+
+                    res.status(201).json({ message: 'Postulación enviada con éxito' });
+                }
+            );
+        }
+    );
+  });
+
+  router.get('/has-applied', (req, res) => {
+    const { userId, jobId } = req.query;
+
+    if (!userId || !jobId) {
+        return res.status(400).json({ message: 'Faltan parámetros' });
+    }
+
+    db.query(
+        `SELECT * FROM applications WHERE user_id = ? AND job_id = ?`,
+        [userId, jobId],
+        (err, results) => {
+            if (err) {
+                console.error('❌ Error al verificar postulación:', err);
+                return res.status(500).json({ message: 'Error del servidor' });
+            }
+
+            const alreadyApplied = results.length > 0;
+            res.json({ applied: alreadyApplied });
+        }
+    );
+});
 
 module.exports = router;
