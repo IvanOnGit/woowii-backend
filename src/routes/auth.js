@@ -107,21 +107,69 @@ router.post('/update-avatar', async (req, res) => {
 });
 
 router.get('/get-user', (req, res) => {
-    const { userId } = req.query;
+  const { userId } = req.query;
 
-    if (!userId) {
-        return res.status(400).json({ message: 'User ID es requerido' });
+  if (!userId) {
+      return res.status(400).json({ message: 'User ID es requerido' });
+  }
+
+  db.query(
+      'SELECT username, email, profile_picture, title, description FROM users WHERE id = ?',
+      [userId],
+      (err, results) => {
+          if (err) return res.status(500).json({ message: 'Error en el servidor' });
+
+          if (results.length === 0) {
+              return res.status(404).json({ message: 'Usuario no encontrado' });
+          }
+
+          res.status(200).json(results[0]);
+      }
+  );
+});
+
+router.post('/update-user-info', (req, res) => {
+  const { userId, title, description } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'userId es requerido' });
+  }
+
+  if (!title && !description) {
+    return res.status(400).json({ message: 'Se debe proporcionar al menos title o description' });
+  }
+
+  // Create dynamic query based on provided fields
+  let updateQuery = 'UPDATE users SET ';
+  const queryParams = [];
+  
+  if (title) {
+    updateQuery += 'title = ?';
+    queryParams.push(title);
+  }
+  
+  if (description) {
+    if (title) updateQuery += ', ';
+    updateQuery += 'description = ?';
+    queryParams.push(description);
+  }
+  
+  updateQuery += ' WHERE id = ?';
+  queryParams.push(userId);
+
+  db.query(
+    updateQuery,
+    queryParams,
+    (err, result) => {
+      if (err) return res.status(500).json({ message: 'Error en el servidor', error: err });
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      res.status(200).json({ message: 'Información actualizada correctamente' });
     }
-
-    db.query('SELECT username, profile_picture FROM users WHERE id = ?', [userId], (err, results) => {
-        if (err) return res.status(500).json({ message: 'Error en el servidor' });
-
-        if (results.length === 0) {
-            return res.status(404).json({ message: 'Usuario no encontrado' });
-        }
-
-        res.status(200).json(results[0]);
-    });
+  );
 });
 
 router.post('/register-company', async (req, res) => {
