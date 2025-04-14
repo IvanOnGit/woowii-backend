@@ -693,4 +693,31 @@ router.get('/get-user-skills', async (req, res) => {
     });
   });
 
+  router.get('/candidates/by-job', (req, res) => {
+    const jobId = req.query.jobId;
+  
+    if (!jobId) {
+      return res.status(400).json({ error: 'Missing jobId in query.' });
+    }
+  
+    const sql = `
+      SELECT 
+        users.username,
+        users.profile_picture,
+        users.toolset
+      FROM applications
+      JOIN users ON applications.user_id = users.id
+      WHERE applications.job_id = ?
+    `;
+  
+    db.query(sql, [jobId], (err, results) => {
+      if (err) {
+        console.error('Error fetching candidates by job:', err);
+        return res.status(500).json({ error: 'Internal server error.' });
+      }
+  
+      res.json(results);
+    });
+  });
+
 module.exports = router;
