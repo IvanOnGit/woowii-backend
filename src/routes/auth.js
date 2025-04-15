@@ -750,12 +750,15 @@ router.get('/get-user-skills', async (req, res) => {
   
     const sql = `
       SELECT 
-        users.username,
-        users.profile_picture,
-        users.toolset
-      FROM applications
-      JOIN users ON applications.user_id = users.id
-      WHERE applications.job_id = ?
+      applications.id AS applicationId,
+      users.id AS userId,
+      users.username,
+      users.profile_picture,
+      users.toolset
+    FROM applications
+    JOIN users ON applications.user_id = users.id
+    WHERE applications.job_id = ?
+
     `;
   
     db.query(sql, [jobId], (err, results) => {
@@ -765,6 +768,26 @@ router.get('/get-user-skills', async (req, res) => {
       }
   
       res.json(results);
+    });
+  });
+
+  router.patch('/applications/:id/match', (req, res) => {
+    const applicationId = req.params.id;
+  
+    // Cambiamos 'matched' por 'status' y su valor por 'matched'
+    const sql = `UPDATE applications SET status = 'matched' WHERE id = ? AND status = 'pending'`;
+  
+    db.query(sql, [applicationId], (err, result) => {
+      if (err) {
+        console.error('Error al hacer match con el candidato:', err);
+        return res.status(500).json({ error: 'Error interno del servidor.' });
+      }
+  
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'Aplicación no encontrada o ya fue procesada.' });
+      }
+  
+      res.json({ success: true, message: 'Candidato aceptado correctamente.' });
     });
   });
 
