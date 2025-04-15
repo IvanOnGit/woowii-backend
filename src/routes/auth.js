@@ -114,7 +114,7 @@ router.get('/get-user', (req, res) => {
   }
 
   db.query(
-      'SELECT username, email, profile_picture, title, description FROM users WHERE id = ?',
+      'SELECT username, email, profile_picture, title, description, fullname FROM users WHERE id = ?',
       [userId],
       (err, results) => {
           if (err) return res.status(500).json({ message: 'Error en el servidor' });
@@ -336,7 +336,7 @@ router.post('/update-avatar-company', async (req, res) => {
 
     console.log("ID recibido:", id);  // Log para verificar el id recibido
 
-    db.query('SELECT Company_username, Company_avatar FROM companies WHERE id = ?', [id], (err, results) => {
+    db.query('SELECT Company_username, Company_fullname, Company_avatar FROM companies WHERE id = ?', [id], (err, results) => {
         if (err) {
             console.error("Error de consulta:", err);  // Log para errores de la base de datos
             return res.status(500).json({ message: 'Error en el servidor' });
