@@ -791,4 +791,56 @@ router.get('/get-user-skills', async (req, res) => {
     });
   });
 
+  router.get('/user-matches', (req, res) => {
+    const userId = req.query.userId;
+  
+    if (!userId) {
+      return res.status(400).json({ error: 'Falta userId' });
+    }
+  
+    const sql = `
+      SELECT 
+        a.id AS applicationId,
+        c.company_fullname AS companyName,
+        c.company_avatar AS companyAvatar,
+        j.title AS jobTitle
+      FROM applications a
+      JOIN jobs j ON a.job_id = j.id
+      JOIN companies c ON j.company_id = c.id
+      WHERE a.user_id = ? AND a.status = 'matched' AND a.viewed = FALSE
+      ORDER BY a.applied_at DESC
+    `;
+  
+    db.query(sql, [userId], (err, results) => {
+      if (err) {
+        console.error('❌ Error al obtener matches del usuario:', err);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+      }
+  
+      // Solo retornamos los resultados sin marcarlos como vistos
+      res.json(results);
+    });
+  });
+
+  router.post('/mark-notifications-viewed', (req, res) => {
+    const { userId, notificationIds } = req.body;
+  
+    if (!userId || !notificationIds || !notificationIds.length) {
+      return res.status(400).json({ error: 'Faltan datos requeridos' });
+    }
+  
+    const updateSql = `UPDATE applications SET viewed = TRUE WHERE id IN (?) AND user_id = ?`;
+    
+    db.query(updateSql, [notificationIds, userId], (err) => {
+      if (err) {
+        console.error('❌ Error al marcar notificaciones como vistas:', err);
+        return res.status(500).json({ error: 'Error al actualizar notificaciones' });
+      }
+  
+      res.json({ success: true });
+    });
+  });
+
+  
+
 module.exports = router;
