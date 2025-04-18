@@ -841,6 +841,27 @@ router.get('/get-user-skills', async (req, res) => {
     });
   });
 
-  
+  router.post('/submit-personality-test', (req, res) => {
+    const { userId, answers } = req.body;
+
+    if (!userId || !Array.isArray(answers) || answers.length !== 88) {
+        return res.status(400).json({ message: 'Faltan datos o el test no tiene 88 respuestas' });
+    }
+
+    const sql = `
+        INSERT INTO personality_tests (user_id, answers)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE answers = ?
+    `;
+
+    db.query(sql, [userId, JSON.stringify(answers), JSON.stringify(answers)], (err) => {
+        if (err) {
+            console.error('❌ Error al guardar el test de personalidad:', err);
+            return res.status(500).json({ message: 'Error al guardar el test' });
+        }
+
+        res.status(201).json({ message: 'Test de personalidad guardado con éxito' });
+    });
+  });
 
 module.exports = router;
