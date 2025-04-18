@@ -864,4 +864,27 @@ router.get('/get-user-skills', async (req, res) => {
     });
   });
 
+  router.get('/check-personality-test', (req, res) => {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'Se requiere el ID del usuario' });
+    }
+    
+    db.query(
+      'SELECT * FROM personality_tests WHERE user_id = ?',
+      [userId],
+      (err, results) => {
+        if (err) {
+          console.error('Error al verificar test de personalidad:', err);
+          return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        
+        return res.status(200).json({ 
+          hasTest: results.length > 0 
+        });
+      }
+    );
+});
+
 module.exports = router;
