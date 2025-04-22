@@ -822,6 +822,35 @@ router.get('/get-user-skills', async (req, res) => {
     });
   });
 
+  router.get('/applications/matched', (req, res) => {
+    const { companyId } = req.query;
+  
+    if (!companyId) {
+      return res.status(400).json({ message: 'Se requiere el ID de la empresa' });
+    }
+  
+    const sql = `
+      SELECT 
+        a.id AS application_id,
+        a.user_id,
+        a.job_id,
+        j.title AS job_title
+      FROM applications a
+      JOIN jobs j ON a.job_id = j.id
+      WHERE j.company_id = ? AND a.status = 'matched'
+      ORDER BY a.applied_at DESC
+    `;
+  
+    db.query(sql, [companyId], (err, results) => {
+      if (err) {
+        console.error('Error al obtener usuarios matcheados:', err);
+        return res.status(500).json({ message: 'Error interno del servidor' });
+      }
+  
+      res.json(results);
+    });
+  });
+
   router.post('/mark-notifications-viewed', (req, res) => {
     const { userId, notificationIds } = req.body;
   
